@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Innovación - IA para Optimizar la Planificación Curricular Docente</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         :root {
             --primary-color: #1a73e8;
@@ -15,12 +17,31 @@
             --text-light: #fff;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --accent: #f39c12;
+            --success: #27ae60;
+            --warning: #e67e22;
+            --error: #e74c3c;
+            --dark: #2c3e50;
+            --darker: #1a252f;
+            --light: #ecf0f1;
+            --gray: #7f8c8d;
+            --user-msg: rgba(52, 152, 219, 0.15);
+            --bot-msg: rgba(255, 255, 255, 0.08);
+            --sidebar: #34495e;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 20px rgba(52, 152, 219, 0.3);
+            --education: #9b59b6;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
@@ -782,6 +803,538 @@
             border-top: 1px solid #444;
         }
 
+        /* Chatbot Styles */
+        .chat-floating-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            box-shadow: var(--glow);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-floating-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-modal-content {
+            width: 90%;
+            max-width: 500px;
+            height: 80vh;
+            max-height: 80vh;
+            background: var(--dark);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .chat-modal-header {
+            padding: 16px 20px;
+            background: var(--sidebar);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-modal-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .chat-modal-body .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .close-chat-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+            position: relative;
+            min-height: 0;
+            max-height: 100%;
+        }
+
+        .message {
+            max-width: 85%;
+            display: flex;
+            gap: 12px;
+            animation: messageSlide 0.4s ease;
+        }
+
+        @keyframes messageSlide {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            box-shadow: var(--glow);
+        }
+
+        .bot-avatar {
+            background: linear-gradient(135deg, var(--education), #8e44ad);
+            color: white;
+            box-shadow: 0 0 20px rgba(155, 89, 182, 0.4);
+        }
+
+        .message-content {
+            padding: 16px 20px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+        }
+
+        .user-message .message-content {
+            background: var(--user-msg);
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.15);
+        }
+
+        .bot-message .message-content {
+            background: var(--bot-msg);
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--gray);
+            margin-top: 8px;
+            text-align: right;
+            opacity: 0.7;
+        }
+
+        .bot-message .message-time {
+            text-align: left;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 8px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--light);
+        }
+
+        .quick-action:hover {
+            background: var(--primary);
+            color: var(--light);
+            transform: translateY(-2px);
+            box-shadow: var(--glow);
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            background: var(--bot-msg);
+            padding: 16px 20px;
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        .input-area {
+            padding: 20px 24px;
+            background: rgba(44, 62, 80, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+            backdrop-filter: blur(20px);
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 18px;
+            outline: none;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+        }
+
+        .message-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .send-button {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            border: none;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 18px;
+            box-shadow: var(--glow);
+        }
+
+        .send-button:hover {
+            transform: scale(1.05) rotate(5deg);
+            box-shadow: 0 0 30px rgba(52, 152, 219, 0.5);
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-action {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .input-action:hover {
+            background: var(--primary);
+            color: var(--light);
+            transform: scale(1.05);
+            box-shadow: var(--glow);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-online {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-processing {
+            background: var(--warning);
+            box-shadow: 0 0 10px var(--warning);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: white;
+            z-index: 10000;
+            max-width: 350px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .notification.success {
+            background: rgba(39, 174, 96, 0.9);
+        }
+
+        .notification.error {
+            background: rgba(231, 76, 60, 0.9);
+        }
+
+        .notification.info {
+            background: rgba(52, 152, 219, 0.9);
+        }
+
+        .notification.warning {
+            background: rgba(230, 126, 34, 0.9);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .messages-container::-webkit-scrollbar,
+        .content-container::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track,
+        .content-container::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb,
+        .content-container::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover,
+        .content-container::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        /* Login Modal Styles */
+        .login-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1002;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 40px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .login-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: var(--glow);
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(52, 152, 219, 0.5);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-light);
+        }
+
+        .user-avatar-small {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: var(--text-light);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-left: 10px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
         /* Responsive Styles */
         @media (max-width: 992px) {
             .hero h1 {
@@ -859,6 +1412,26 @@
             .timeline-item:nth-child(even)::after {
                 left: 21px;
             }
+            
+            .message {
+                max-width: 90%;
+            }
+
+            .input-area {
+                padding: 16px 20px;
+            }
+
+            .chat-modal-content {
+                width: 95%;
+                height: 85vh;
+                max-height: 85vh;
+            }
+
+            .user-info {
+                flex-direction: column;
+                gap: 5px;
+                margin-top: 10px;
+            }
         }
 
         @media (max-width: 576px) {
@@ -894,10 +1467,46 @@
             .hero p {
                 font-size: 1rem;
             }
+            
+            .message {
+                max-width: 95%;
+            }
+
+            .login-card {
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Modal de Login -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="logo" style="justify-content: center; margin-bottom: 20px;">
+                    <div class="logo-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="logo-text">Innovación Educativa</div>
+                </div>
+                <h1 class="login-title">Acceso al Sistema</h1>
+                <p class="login-subtitle">Inicia sesión para acceder al contenido</p>
+                
+                <div class="login-form">
+                    <input type="text" class="login-input" id="loginUsername" placeholder="Usuario" value="docente">
+                    <input type="password" class="login-input" id="loginPassword" placeholder="Contraseña" value="password">
+                    <button class="login-button" id="loginButton">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    </button>
+                </div>
+                
+                <p style="margin-top: 20px; color: rgba(255,255,255,0.5); font-size: 14px;">
+                    Usa: docente / password
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <header>
         <div class="container">
@@ -917,6 +1526,15 @@
                         <li><a href="#entrevistas">Entrevistas</a></li>
                         <li><a href="#soluciones">Soluciones</a></li>
                         <li><a href="#contacto">Contacto</a></li>
+                        <li>
+                            <div class="user-info" id="userInfo" style="display: none;">
+                                <div class="user-avatar-small">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span id="userNameDisplay">Usuario</span>
+                                <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+                            </div>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -1669,7 +2287,921 @@
         </div>
     </footer>
 
+    <!-- Botón flotante para abrir el chat -->
+    <button class="chat-floating-btn" id="chatFloatingBtn">
+        <i class="fas fa-comments"></i>
+    </button>
+    
+    <!-- Modal del chat -->
+    <div class="chat-modal" id="chatModal">
+        <div class="chat-modal-content">
+            <div class="chat-modal-header">
+                <h3><i class="fas fa-robot"></i> Asistente Edu Assist</h3>
+                <button class="close-chat-btn" id="closeChatBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-modal-body">
+                <div class="chat-container">
+                    <div class="messages-container" id="messagesContainer">
+                        <div class="message bot-message">
+                            <div class="avatar bot-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                ¡Hola! Soy Edu Assist, tu asistente docente con IA. ¿En qué puedo ayudarte hoy?
+                                <div class="quick-actions">
+                                    <div class="quick-action" onclick="handleQuickAction('Generar planificación')">Generar planificación</div>
+                                    <div class="quick-action" onclick="handleQuickAction('Crear sílabo')">Crear sílabo</div>
+                                    <div class="quick-action" onclick="handleQuickAction('Material visual')">Material visual</div>
+                                    <div class="quick-action" onclick="handleQuickAction('Evaluar competencias')">Evaluar competencias</div>
+                                </div>
+                                <div class="message-time" id="initialMessageTime"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="avatar bot-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-area">
+                        <div class="input-actions">
+                            <div class="input-action" onclick="attachFile()" title="Adjuntar archivo">
+                                <i class="fas fa-paperclip"></i>
+                            </div>
+                            <div class="input-action" onclick="showCommands()" title="Mostrar comandos">
+                                <i class="fas fa-terminal"></i>
+                            </div>
+                        </div>
+                        
+                        <input type="text" class="message-input" id="messageInput" placeholder="Escribe tu mensaje o pregunta...">
+                        
+                        <button class="send-button" id="sendButton">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ================================
+        // INFORMACIÓN DEL PROYECTO Edu Assist
+        // ================================
+        
+        const projectInfo = {
+            tema: "La Inteligencia Artificial como herramienta para optimizar el tiempo en la planificación curricular docente",
+            problema: "Los docentes invierten una cantidad considerable de tiempo en la elaboración de planificaciones y materiales académicos. Este proceso se realiza de forma manual y tradicional, sin el apoyo de herramientas tecnológicas avanzadas.",
+            causa: "La causa de este comportamiento radica en la falta de capacitación y actualización tecnológica del personal docente.",
+            hipotesis: "Si los docentes del Instituto 'San Agustín' reciben formación sistemática en el uso de herramientas de Inteligencia Artificial, entonces podrán optimizar el tiempo y mejorar la eficiencia en la planificación curricular del Programa de Estudios de Asistencia Administrativa.",
+            solucion: "Implementación de un asistente virtual institucional para la planificación curricular que utiliza inteligencia artificial para generar sesiones educativas alineadas con la normativa educativa vigente en menos de 30 segundos.",
+            equipo: [
+                "RUTH YVANA FLORES GUERRERO",
+                "MARIBEL ELVIRA SALVATIERRA VIZCARDO", 
+                "EDGAR DIAZ AGUILAR",
+                "HAILEY ALEXANDER RIVAS POZO"
+            ],
+            objetivos: {
+                general: "Analizar cómo la inteligencia artificial puede optimizar el tiempo y mejorar la eficiencia en la planificación docente, contribuyendo al fortalecimiento de la innovación pedagógica.",
+                especificos: [
+                    "Identificar las principales dificultades que enfrentan los docentes durante el proceso de planificación educativa.",
+                    "Explorar las herramientas de inteligencia artificial disponibles que pueden aplicarse en la elaboración y gestión de la planificación docente.",
+                    "Diseñar una propuesta de planificación optimizada mediante el uso de inteligencia artificial.",
+                    "Evaluar la percepción y aceptación de los docentes respecto al uso de la inteligencia artificial como apoyo en la planificación.",
+                    "Formular recomendaciones para la integración ética y pedagógica de la IA en los procesos de planificación educativa."
+                ]
+            },
+            entrevistas: {
+                "Luisa Arévalo (52 años)": {
+                    profesion: "Contadora",
+                    experiencia: "15 años",
+                    respuestas: {
+                        tareas: "Las tareas que más tiempo me consumen son la planificación detallada (sesión de clase) y la revisión de trabajos académicos, lo que genera frustración por la sobre carga.",
+                        distribucion: "40% en planificación, 40% en enseñanza y 20 % en evaluación",
+                        informacion: "Valoro la información sobre estilos y ritmos de aprendizaje de los estudiantes para adaptar mejor a las sesiones de aprendizaje",
+                        ia: "La IA podría ser más útil en la organización temporal y en la personalización de contenidos actualizados.",
+                        preferencia: "Prefiero que un asistente de la IA me ofreciera opciones personalizadas para elegir, en lugar de planificaciones automáticas. Siento que perdería el interés de análisis cada información."
+                    }
+                },
+                "Dany Balarezo Ramírez (62 años)": {
+                    profesion: "Contadora", 
+                    experiencia: "36 años",
+                    respuestas: {
+                        tareas: "La parte que más tiempo me toma es la planificación semanal y mensual, porque debo revisar los sílabos, ajustar los contenidos y elaborar materiales manualmente. También la evaluación de los trabajos y llenar los informes administrativos me resulta agotador.",
+                        distribucion: "50% a la planificación, 30% a la enseñanza y 20% a la evaluación",
+                        informacion: "La observación directa de los estudiantes. Ver cómo aprenden, quiénes necesitan más apoyo y quiénes avanzan más rápido. No uso programas tecnológicos, me baso más en la experiencia y el trato diario con ellos.",
+                        ia: "Creo que podría ayudar en la organización del tiempo o tal vez en dar ideas para mejorar materiales. Pero no sabría usarla todavía; necesitaría que me enseñen primero cómo funciona.",
+                        preferencia: "Preferiría que me dé opciones, no que lo haga todo solo. Me gusta tener el control de lo que enseño y asegurarme que esté de acuerdo con el programa oficial."
+                    }
+                },
+                "Violeta Katherine Díaz Silva (35 años)": {
+                    profesion: "Administradora",
+                    experiencia: "2 años", 
+                    respuestas: {
+                        tareas: "Quizá en algunas ocasiones son las correcciones de trabajos y la planificación de algunos temas porque quiero hacerlo más entendible posible y que se adapte a la realidad.",
+                        distribucion: "40% de mi tiempo a la planificación, 40% a la enseñanza directa y 20% a la evaluación y retroalimentación",
+                        informacion: "Considero esencial conocer los niveles de conocimientos previos, el nivel del desempeño, los estilos de aprendizaje y la motivación de los estudiantes. Esa información permite adaptar estrategias y actividades al ritmo de cada grupo.",
+                        ia: "La IA sería especialmente útil en la organización temporal y la generación de propuestas didácticas iniciales, ya que puede agilizar la estructura base de una sesión. Sin embargo, la personalización debe seguir siendo guiada por el criterio humano del docente.",
+                        preferencia: "Preferiría que ofreciera opciones sugeridas, manteniendo siempre el control docente. La IA puede aportar ideas y estructuras, pero la planificación debe conservar el toque humano y contextual."
+                    }
+                }
+            }
+        };
+
+        // ================================
+        // SISTEMA DE ALMACENAMIENTO
+        // ================================
+
+        class StorageSystem {
+            constructor() {
+                this.storageKey = 'eduassist_data';
+                this.defaultData = {
+                    usuario: {
+                        nombre: 'Docente',
+                        institucion: 'Instituto San Agustín'
+                    },
+                    planificaciones: [],
+                    silabos: [],
+                    materiales: [],
+                    evaluaciones: [],
+                    configuracion: {
+                        tema: 'oscuro'
+                    }
+                };
+                this.data = this.loadData();
+            }
+
+            loadData() {
+                try {
+                    const stored = localStorage.getItem(this.storageKey);
+                    if (stored) {
+                        return JSON.parse(stored);
+                    }
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                }
+                return {...this.defaultData};
+            }
+
+            saveData() {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.data));
+                    return true;
+                } catch (e) {
+                    console.error('Error saving data:', e);
+                    return false;
+                }
+            }
+
+            addDocument(tipo, documento) {
+                if (!this.data[tipo]) this.data[tipo] = [];
+                
+                documento.id = Date.now().toString();
+                documento.fechaCreacion = new Date().toISOString();
+                
+                this.data[tipo].push(documento);
+                this.saveData();
+                return documento.id;
+            }
+
+            getDocuments(tipo) {
+                return this.data[tipo] || [];
+            }
+
+            updateUserConfig(config) {
+                this.data.usuario = {...this.data.usuario, ...config};
+                this.saveData();
+            }
+
+            updateAppConfig(config) {
+                this.data.configuracion = {...this.data.configuracion, ...config};
+                this.saveData();
+            }
+        }
+
+        // ================================
+        // SISTEMA DE IA Y GENERACIÓN DE CONTENIDO
+        // ================================
+
+        class AISystem {
+            getPredefinedResponse(prompt) {
+                const lowerPrompt = prompt.toLowerCase();
+                
+                // Respuestas sobre el proyecto Edu Assist
+                if (lowerPrompt.includes('proyecto') || lowerPrompt.includes('edu assist') || lowerPrompt.includes('investigación')) {
+                    return `**Información del Proyecto Edu Assist**
+
+**Tema:** ${projectInfo.tema}
+
+**Problema identificado:** ${projectInfo.problema}
+
+**Causa:** ${projectInfo.causa}
+
+**Hipótesis:** ${projectInfo.hipotesis}
+
+**Solución propuesta:** ${projectInfo.solucion}
+
+**Equipo de trabajo:**
+${projectInfo.equipo.map(miembro => `- ${miembro}`).join('\n')}
+
+**Objetivo general:** ${projectInfo.objetivos.general}
+
+**Objetivos específicos:**
+${projectInfo.objetivos.especificos.map((obj, i) => `${i+1}. ${obj}`).join('\n')}
+
+¿Te gustaría conocer más detalles sobre algún aspecto específico del proyecto?`;
+                }
+                
+                // Respuestas sobre las entrevistas
+                if (lowerPrompt.includes('entrevista') || lowerPrompt.includes('docentes') || lowerPrompt.includes('encuesta')) {
+                    return `**Resumen de las entrevistas a docentes:**
+
+**1. Luisa Arévalo (52 años) - Contadora - 15 años de experiencia**
+- Tareas que consumen más tiempo: ${projectInfo.entrevistas["Luisa Arévalo (52 años)"].respuestas.tareas}
+- Distribución de tiempo: ${projectInfo.entrevistas["Luisa Arévalo (52 años)"].respuestas.distribucion}
+- Preferencia sobre IA: ${projectInfo.entrevistas["Luisa Arévalo (52 años)"].respuestas.preferencia}
+
+**2. Dany Balarezo Ramírez (62 años) - Contadora - 36 años de experiencia**
+- Tareas que consumen más tiempo: ${projectInfo.entrevistas["Dany Balarezo Ramírez (62 años)"].respuestas.tareas}
+- Distribución de tiempo: ${projectInfo.entrevistas["Dany Balarezo Ramírez (62 años)"].respuestas.distribucion}
+- Preferencia sobre IA: ${projectInfo.entrevistas["Dany Balarezo Ramírez (62 años)"].respuestas.preferencia}
+
+**3. Violeta Katherine Díaz Silva (35 años) - Administradora - 2 años de experiencia**
+- Tareas que consumen más tiempo: ${projectInfo.entrevistas["Violeta Katherine Díaz Silva (35 años)"].respuestas.tareas}
+- Distribución de tiempo: ${projectInfo.entrevistas["Violeta Katherine Díaz Silva (35 años)"].respuestas.distribucion}
+- Preferencia sobre IA: ${projectInfo.entrevistas["Violeta Katherine Díaz Silva (35 años)"].respuestas.preferencia}
+
+**Conclusiones generales:**
+Los docentes coinciden en que la planificación consume gran parte de su tiempo y prefieren que la IA ofrezca opciones personalizadas manteniendo el control docente.`;
+                }
+                
+                // Respuestas específicas para comandos comunes
+                if (lowerPrompt.includes('hola') || lowerPrompt.includes('ayuda') || lowerPrompt.includes('ayudame')) {
+                    return `¡Hola! Soy Edu Assist, tu asistente docente. 
+
+Puedo ayudarte con:
+- **Generar planificación**: Diseño de sesiones de clase
+- **Crear sílabo**: Estructura académica oficial  
+- **Material visual**: Presentaciones, infografías, guías
+- **Evaluar competencias**: Rúbricas, pruebas, instrumentos
+- **Capacitación IA**: Aprende a usar IA en educación
+- **Información del proyecto**: Detalles sobre la investigación Edu Assist
+
+¿En qué puedo asistirte específicamente hoy?`;
+                }
+                
+                // Respuestas predefinidas para las 4 funciones principales
+                if (lowerPrompt.includes('planificación') || lowerPrompt.includes('sesión')) {
+                    return `Para crear una planificación curricular efectiva:
+
+**Pasos recomendados:**
+1. **Definir objetivos claros** - Establece qué competencias deben desarrollar los estudiantes
+2. **Seleccionar contenidos** - Elige los temas principales alineados con el currículo nacional
+3. **Diseñar actividades** - Crea experiencias de aprendizaje activas y participativas
+4. **Preparar recursos** - Selecciona materiales y herramientas adecuadas
+5. **Establecer evaluación** - Diseña instrumentos para medir el aprendizaje
+
+**Consejos prácticos:**
+- Considera los diferentes estilos de aprendizaje
+- Incluye actividades variadas (individuales, grupales, prácticas)
+- Adapta el tiempo según la complejidad de los temas
+- Prepara material de apoyo visual
+
+¿Te gustaría que genere una planificación específica para tu clase?`;
+                } else if (lowerPrompt.includes('sílabo') || lowerPrompt.includes('silabo')) {
+                    return `Para elaborar un sílabo académico completo:
+
+**Estructura recomendada:**
+1. **Datos generales del curso** - Nombre, código, créditos, horario
+2. **Competencias a desarrollar** - Habilidades y conocimientos que adquirirán los estudiantes
+3. **Contenidos temáticos** - Unidades y temas organizados secuencialmente
+4. **Metodología de enseñanza** - Estrategias y técnicas pedagógicas
+5. **Sistema de evaluación** - Criterios, instrumentos y porcentajes
+6. **Bibliografía** - Material de consulta básica y complementaria
+7. **Cronograma de actividades** - Distribución temporal de los contenidos
+
+**Consejos:**
+- Alinea con el currículo nacional vigente
+- Especifica criterios de evaluación claros y medibles
+- Incluye diversos recursos educativos (digitales y físicos)
+- Considera diferentes estilos de aprendizaje
+
+¿Necesitas ayuda con algún aspecto específico del sílabo?`;
+                } else if (lowerPrompt.includes('material') || lowerPrompt.includes('visual') || lowerPrompt.includes('recurso')) {
+                    return `Para crear materiales educativos efectivos:
+
+**Tipos de materiales que puedes crear:**
+- Presentaciones interactivas
+- Infografías visuales
+- Guías de estudio
+- Esquemas conceptuales
+- Actividades prácticas
+
+**Recomendaciones:**
+- Usa diseño atractivo y profesional
+- Incluye elementos visuales
+- Adapta al nivel de los estudiantes
+- Promueve la interactividad
+- Considera la accesibilidad
+
+¿Qué tipo de material te gustaría crear?`;
+                } else if (lowerPrompt.includes('evaluación') || lowerPrompt.includes('evaluar') || lowerPrompt.includes('competencias')) {
+                    return `Para diseñar sistemas de evaluación:
+
+**Instrumentos de evaluación:**
+- Rúbricas de evaluación
+- Pruebas escritas
+- Proyectos prácticos
+- Presentaciones orales
+- Portafolios de aprendizaje
+
+**Criterios importantes:**
+- Validez (mide lo que debe medir)
+- Confiabilidad (resultados consistentes)
+- Objetividad (criterios claros)
+- Integralidad (diversos aspectos)
+
+¿Necesitas ayuda con algún tipo específico de evaluación?`;
+                } else if (lowerPrompt.includes('capacitación') || lowerPrompt.includes('ia') || lowerPrompt.includes('inteligencia artificial')) {
+                    return `La capacitación en IA para docentes incluye:
+
+**Módulos disponibles:**
+1. **Introducción a la IA en educación** - Conceptos básicos y aplicaciones
+2. **Herramientas de IA para planificación** - Asistentes virtuales y generadores de contenido
+3. **Evaluación con IA** - Sistemas automatizados de evaluación
+4. **Ética y uso responsable** - Consideraciones importantes para el uso de IA
+
+**Beneficios:**
+- Optimización del tiempo de planificación
+- Personalización del aprendizaje
+- Mejora en la calidad educativa
+- Actualización tecnológica docente
+
+¿Te interesa algún módulo en particular?`;
+                } else {
+                    return `¡Hola! Soy Edu Assist, tu asistente docente. 
+
+Puedo ayudarte con:
+- **Generar planificación**: Diseño de sesiones de clase
+- **Crear sílabo**: Estructura académica oficial
+- **Material visual**: Presentaciones, infografías, guías
+- **Evaluar competencias**: Rúbricas, pruebas, instrumentos
+- **Capacitación IA**: Aprende a usar IA en educación
+- **Información del proyecto**: Detalles sobre la investigación Edu Assist
+
+¿En qué puedo asistirte específicamente hoy?`;
+                }
+            }
+        }
+
+        // ================================
+        // SISTEMA DE CHATBOT INTELIGENTE
+        // ================================
+
+        class Chatbot {
+            constructor() {
+                this.aiSystem = new AISystem();
+                this.conversationHistory = [];
+            }
+
+            async processMessage(message) {
+                // Agregar mensaje del usuario al historial
+                this.conversationHistory.push({ role: 'user', content: message });
+                
+                // Mostrar indicador de escritura
+                showTypingIndicator();
+                
+                try {
+                    // Simular tiempo de procesamiento
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Obtener respuesta de IA
+                    const response = this.aiSystem.getPredefinedResponse(message);
+                    
+                    // Agregar respuesta al historial
+                    this.conversationHistory.push({ role: 'assistant', content: response });
+                    
+                    return response;
+                } catch (error) {
+                    console.error('Error en el chatbot:', error);
+                    return "Lo siento, ha ocurrido un error. Por favor, intenta nuevamente.";
+                } finally {
+                    hideTypingIndicator();
+                }
+            }
+
+            getQuickActions(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                if (lowerMessage.includes('proyecto') || lowerMessage.includes('edu assist') || lowerMessage.includes('investigación')) {
+                    return ["Ver objetivos", "Conocer equipo", "Ver entrevistas"];
+                } else if (lowerMessage.includes('planificación') || lowerMessage.includes('sesión')) {
+                    return ["Generar planificación", "Ver ejemplos", "Configurar duración"];
+                } else if (lowerMessage.includes('sílabo') || lowerMessage.includes('silabo')) {
+                    return ["Crear sílabo", "Estructura oficial", "Competencias"];
+                } else if (lowerMessage.includes('material') || lowerMessage.includes('visual')) {
+                    return ["Diseñar presentación", "Crear infografía", "Generar actividad"];
+                } else if (lowerMessage.includes('capacitación') || lowerMessage.includes('ia')) {
+                    return ["Ver módulos", "Inscribirme", "Recursos adicionales"];
+                } else if (lowerMessage.includes('evaluación') || lowerMessage.includes('evaluar')) {
+                    return ["Crear rúbrica", "Diseñar examen", "Lista de cotejo"];
+                }
+                
+                return ["Generar planificación", "Crear sílabo", "Material visual", "Evaluar competencias", "Información del proyecto"];
+            }
+        }
+
+        // ================================
+        // INICIALIZACIÓN DE SISTEMAS
+        // ================================
+
+        const storageSystem = new StorageSystem();
+        const chatbot = new Chatbot();
+        let currentUser = null;
+
+        // ================================
+        // INTERFAZ DE USUARIO
+        // ================================
+
+        // Elementos del DOM
+        const loginModal = document.getElementById('loginModal');
+        const loginButton = document.getElementById('loginButton');
+        const userInfo = document.getElementById('userInfo');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+        
+        // Elementos del modal de chat
+        const chatFloatingBtn = document.getElementById('chatFloatingBtn');
+        const chatModal = document.getElementById('chatModal');
+        const closeChatBtn = document.getElementById('closeChatBtn');
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+            
+            // Configurar hora del mensaje inicial
+            document.getElementById('initialMessageTime').textContent = new Date().toLocaleTimeString('es-ES', { 
+                hour: '2-digit', minute: '2-digit' 
+            });
+
+            // Inicializar el sistema de scroll del chat
+            initializeChatScroll();
+            
+            // Verificar si el usuario ya está logueado
+            checkLoginStatus();
+        });
+
+        function initializeSystem() {
+            // Configurar evento de login
+            loginButton.addEventListener('click', handleLogin);
+            
+            // Configurar evento de enter en campos de login
+            document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            // Configurar navegación entre módulos
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const module = this.getAttribute('data-module');
+                    switchModule(module);
+                });
+            });
+            
+            // Configurar chat
+            sendButton.addEventListener('click', processUserInput);
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    processUserInput();
+                }
+            });
+
+            // Configurar modal de chat
+            chatFloatingBtn.addEventListener('click', function() {
+                chatModal.style.display = 'flex';
+                messageInput.focus();
+                // Forzar scroll al fondo cuando se abre el modal
+                setTimeout(scrollToBottom, 100);
+            });
+
+            closeChatBtn.addEventListener('click', function() {
+                chatModal.style.display = 'none';
+            });
+
+            // Cerrar modal al hacer clic fuera
+            chatModal.addEventListener('click', function(e) {
+                if (e.target === chatModal) {
+                    chatModal.style.display = 'none';
+                }
+            });
+        }
+
+        // ================================
+        // SISTEMA DE LOGIN
+        // ================================
+
+        function checkLoginStatus() {
+            const userData = storageSystem.data.usuario;
+            if (userData && userData.nombre) {
+                // Usuario ya está logueado
+                currentUser = userData;
+                hideLoginModal();
+                showUserInfo();
+            } else {
+                // Mostrar modal de login
+                showLoginModal();
+            }
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (username && password) {
+                // Simular autenticación
+                if (username === 'docente' && password === 'password') {
+                    currentUser = {
+                        username: username,
+                        nombre: 'Docente',
+                        institucion: 'Instituto San Agustín'
+                    };
+                    
+                    // Actualizar datos de usuario
+                    storageSystem.updateUserConfig({
+                        nombre: currentUser.nombre,
+                        institucion: currentUser.institucion
+                    });
+                    
+                    // Ocultar modal de login y mostrar información del usuario
+                    hideLoginModal();
+                    showUserInfo();
+                    
+                    showNotification('Sesión iniciada correctamente', 'success');
+                } else {
+                    showNotification('Usuario o contraseña incorrectos', 'error');
+                }
+            } else {
+                showNotification('Por favor, completa todos los campos', 'error');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            storageSystem.updateUserConfig({
+                nombre: '',
+                institucion: ''
+            });
+            showLoginModal();
+            hideUserInfo();
+            showNotification('Sesión cerrada correctamente', 'info');
+        }
+
+        function showLoginModal() {
+            loginModal.style.display = 'flex';
+        }
+
+        function hideLoginModal() {
+            loginModal.style.display = 'none';
+        }
+
+        function showUserInfo() {
+            userInfo.style.display = 'flex';
+            userNameDisplay.textContent = currentUser.nombre;
+        }
+
+        function hideUserInfo() {
+            userInfo.style.display = 'none';
+        }
+
+        // ================================
+        // CORRECCIÓN DEL SCROLL
+        // ================================
+        
+        function initializeChatScroll() {
+            const chatModal = document.getElementById('chatModal');
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        const displayStyle = chatModal.style.display;
+                        if (displayStyle === 'flex') {
+                            // Pequeño retraso para asegurar que el modal está completamente renderizado
+                            setTimeout(scrollToBottom, 100);
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(chatModal, {
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            // Usamos requestAnimationFrame para asegurar que el DOM se ha actualizado
+            requestAnimationFrame(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+
+        // ================================
+        // CHATBOT INTERACTIVO
+        // ================================
+
+        async function processUserInput() {
+            const userInput = messageInput.value.trim();
+            if (!userInput) return;
+
+            addUserMessage(userInput);
+            messageInput.value = '';
+
+            try {
+                const response = await chatbot.processMessage(userInput);
+                const quickActions = chatbot.getQuickActions(userInput);
+                
+                addBotMessage(response, quickActions);
+            } catch (error) {
+                console.error('Error en processUserInput:', error);
+                addBotMessage("Lo siento, ha ocurrido un error. Por favor, intenta nuevamente.");
+            }
+        }
+
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${escapeHtml(text)}
+                    <div class="message-time">${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+                <div class="avatar user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // Forzar el scroll después de que el mensaje se haya agregado al DOM
+            setTimeout(scrollToBottom, 50);
+        }
+
+        function addBotMessage(text, quickActions = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            
+            let quickActionsHTML = '';
+            if (quickActions && quickActions.length > 0) {
+                quickActionsHTML = `
+                    <div class="quick-actions">
+                        ${quickActions.map(action => 
+                            `<div class="quick-action" onclick="handleQuickAction('${escapeHtml(action)}')">${escapeHtml(action)}</div>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="avatar bot-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    ${formatMessage(text)}
+                    ${quickActionsHTML}
+                    <div class="message-time">${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // Forzar el scroll después de que el mensaje se haya agregado al DOM
+            setTimeout(scrollToBottom, 50);
+        }
+
+        function formatMessage(text) {
+            // Convertir saltos de línea a <br>
+            text = text.replace(/\n/g, '<br>');
+            
+            // Convertir **texto** a <strong>texto</strong>
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convertir - elemento a lista
+            text = text.replace(/^- (.*?)(?=<br>|$)/gm, '<li>$1</li>');
+            text = text.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+            
+            return text;
+        }
+
+        function handleQuickAction(action) {
+            const actions = {
+                'Generar planificación': () => generatePlanificacion(),
+                'Crear sílabo': () => generateSilabo(),
+                'Material visual': () => generateMaterial(),
+                'Evaluar competencias': () => generateEvaluacion(),
+                'Información del proyecto': () => {
+                    messageInput.value = 'proyecto';
+                    processUserInput();
+                },
+                'Ver objetivos': () => {
+                    addBotMessage(`**Objetivos del Proyecto Edu Assist**
+
+**Objetivo general:**
+${projectInfo.objetivos.general}
+
+**Objetivos específicos:**
+${projectInfo.objetivos.especificos.map((obj, i) => `${i+1}. ${obj}`).join('<br>')}`);
+                },
+                'Conocer equipo': () => {
+                    addBotMessage(`**Equipo de trabajo Edu Assist:**
+${projectInfo.equipo.map(miembro => `• ${miembro}`).join('<br>')}`);
+                },
+                'Ver entrevistas': () => {
+                    messageInput.value = 'entrevistas';
+                    processUserInput();
+                },
+                'Capacitación IA': () => {
+                    showNotification('Redirigiendo a la sección de capacitación', 'info');
+                }
+            };
+            
+            if (actions[action]) {
+                actions[action]();
+            } else {
+                // Si no es una acción predefinida, tratarla como entrada de usuario
+                messageInput.value = action;
+                processUserInput();
+            }
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'flex';
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ================================
+        // FUNCIONALIDADES ADICIONALES
+        // ================================
+
+        function attachFile() {
+            showNotification('Funcionalidad de adjuntar archivo en desarrollo', 'info');
+        }
+
+        function showCommands() {
+            messageInput.value = '/';
+            messageInput.focus();
+        }
+
+        function showNotification(mensaje, tipo = 'info') {
+            // Crear notificación
+            const notification = document.createElement('div');
+            notification.className = `notification ${tipo}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'warning' ? 'exclamation-triangle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${mensaje}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remover después de 5 segundos
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Funciones para los módulos principales
+        function generatePlanificacion() {
+            showNotification('Generando planificación curricular...', 'info');
+            addBotMessage(`
+                <h3>Planificación Curricular Generada</h3>
+                <p>He creado una planificación completa para tu clase. Incluye:</p>
+                <ul>
+                    <li><strong>Objetivos de aprendizaje</strong> claramente definidos</li>
+                    <li><strong>Actividades</strong> variadas y participativas</li>
+                    <li><strong>Recursos</strong> adecuados para el tema</li>
+                    <li><strong>Evaluación</strong> formativa y sumativa</li>
+                </ul>
+                <p>¿Te gustaría personalizar algún aspecto específico de esta planificación?</p>
+            `, ["Personalizar objetivos", "Modificar actividades", "Cambiar recursos", "Ajustar evaluación"]);
+        }
+
+        function generateSilabo() {
+            showNotification('Generando sílabo académico...', 'info');
+            addBotMessage(`
+                <h3>Sílabo Académico Generado</h3>
+                <p>He creado un sílabo completo con la estructura oficial. Incluye:</p>
+                <ul>
+                    <li><strong>Datos generales</strong> del curso</li>
+                    <li><strong>Competencias</strong> a desarrollar</li>
+                    <li><strong>Contenidos temáticos</strong> organizados</li>
+                    <li><strong>Metodología</strong> de enseñanza</li>
+                    <li><strong>Sistema de evaluación</strong> detallado</li>
+                    <li><strong>Bibliografía</strong> recomendada</li>
+                </ul>
+                <p>¿Qué aspecto del sílabo te gustaría ajustar?</p>
+            `, ["Modificar competencias", "Cambiar contenidos", "Ajustar evaluación", "Actualizar bibliografía"]);
+        }
+
+        function generateMaterial() {
+            showNotification('Generando material visual...', 'info');
+            addBotMessage(`
+                <h3>Material Visual Generado</h3>
+                <p>He creado material educativo visual atractivo. Incluye:</p>
+                <ul>
+                    <li><strong>Presentación</strong> con diseño profesional</li>
+                    <li><strong>Infografías</strong> con información clave</li>
+                    <li><strong>Esquemas</strong> para facilitar la comprensión</li>
+                    <li><strong>Actividades</strong> visuales para los estudiantes</li>
+                </ul>
+                <p>¿Qué tipo de material te gustaría ajustar o crear adicionalmente?</p>
+            `, ["Modificar presentación", "Crear más infografías", "Diseñar actividades", "Generar guía visual"]);
+        }
+
+        function generateEvaluacion() {
+            showNotification('Generando instrumento de evaluación...', 'info');
+            addBotMessage(`
+                <h3>Evaluación de Competencias Generada</h3>
+                <p>He creado un sistema de evaluación completo. Incluye:</p>
+                <ul>
+                    <li><strong>Rúbricas</strong> de evaluación detalladas</li>
+                    <li><strong>Pruebas</strong> con diferentes tipos de preguntas</li>
+                    <li><strong>Listas de cotejo</strong> para evaluar procesos</li>
+                    <li><strong>Instrumentos</strong> para evaluación formativa</li>
+                </ul>
+                <p>¿Qué aspecto del sistema de evaluación te gustaría ajustar?</p>
+            `, ["Modificar rúbricas", "Cambiar pruebas", "Ajustar criterios", "Personalizar instrumentos"]);
+        }
+
+        // ================================
+        // NAVEGACIÓN ENTRE MÓDULOS
+        // ================================
+
+        function switchModule(module) {
+            // Ocultar todos los paneles
+            document.querySelectorAll('.module-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Mostrar el panel seleccionado
+            document.getElementById(`${module}-panel`).classList.add('active');
+            
+            // Actualizar título del módulo
+            const titles = {
+                dashboard: 'Dashboard Principal',
+                planificacion: 'Planificación Curricular',
+                silabos: 'Gestión de Sílabos',
+                materiales: 'Materiales Educativos',
+                evaluacion: 'Evaluación de Competencias',
+                capacitacion: 'Capacitación en IA',
+                configuracion: 'Configuración'
+            };
+            
+            document.getElementById('moduleTitle').textContent = titles[module] || 'Edu Assist';
+            
+            // Actualizar navegación activa
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            document.querySelector(`.nav-item[data-module="${module}"]`).classList.add('active');
+        }
+
+        // ================================
+        // SMOOTH SCROLLING Y MENÚ MÓVIL
+        // ================================
+
         // Mobile menu toggle
         document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
             document.getElementById('main-nav').classList.toggle('active');
